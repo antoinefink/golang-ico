@@ -1,19 +1,16 @@
 package ico
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/binary"
 	"image"
 	"image/png"
 	"io"
-	"image/draw"
-	"bufio"
 )
 
 func Encode(w io.Writer, im image.Image) error {
 	b := im.Bounds()
-	m := image.NewRGBA(b)
-	draw.Draw(m, b, im, b.Min, draw.Src)
 
 	header := head{
 		0,
@@ -28,7 +25,7 @@ func Encode(w io.Writer, im image.Image) error {
 
 	pngbuffer := new(bytes.Buffer)
 	pngwriter := bufio.NewWriter(pngbuffer)
-	err := png.Encode(pngwriter, m)
+	err := png.Encode(pngwriter, im)
 	if err != nil {
 		return err
 	}
@@ -38,9 +35,8 @@ func Encode(w io.Writer, im image.Image) error {
 	}
 	entry.Size = uint32(len(pngbuffer.Bytes()))
 
-	bounds := m.Bounds()
-	entry.Width = uint8(bounds.Dx())
-	entry.Height = uint8(bounds.Dy())
+	entry.Width = uint8(b.Dx())
+	entry.Height = uint8(b.Dy())
 	bb := new(bytes.Buffer)
 
 	var e error
