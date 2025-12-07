@@ -4,13 +4,21 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"image"
 	"image/png"
 	"io"
 )
 
+// ErrImageTooLarge is returned when the image dimensions exceed 256x256 pixels.
+var ErrImageTooLarge = errors.New("ico: image dimensions must not exceed 256x256 pixels")
+
 func Encode(w io.Writer, im image.Image) error {
 	b := im.Bounds()
+
+	if b.Dx() > 256 || b.Dy() > 256 {
+		return ErrImageTooLarge
+	}
 
 	header := head{
 		0,

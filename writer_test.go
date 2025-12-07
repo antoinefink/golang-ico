@@ -179,6 +179,50 @@ func TestEncodeRoundTrip(t *testing.T) {
 	}
 }
 
+// TestEncodeImageTooLarge tests that encoding fails for images larger than 256x256
+func TestEncodeImageTooLarge(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		width     int
+		height    int
+		wantError bool
+	}{
+		{"256x256", 256, 256, false},
+		{"257x256", 257, 256, true},
+		{"256x257", 256, 257, true},
+		{"512x512", 512, 512, true},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			img := image.NewNRGBA(image.Rect(0, 0, tc.width, tc.height))
+			tmpFile := filepath.Join(t.TempDir(), "test.ico")
+			f, err := os.Create(tmpFile)
+			if err != nil {
+				t.Fatalf("failed to create temp file: %v", err)
+			}
+			defer f.Close()
+
+			err = Encode(f, img)
+
+			if tc.wantError {
+				if err != ErrImageTooLarge {
+					t.Errorf("expected ErrImageTooLarge, got %v", err)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("unexpected error: %v", err)
+				}
+			}
+		})
+	}
+}
+
 // TestEncodeFromPNG tests encoding ICO from PNG files
 func TestEncodeFromPNG(t *testing.T) {
 	t.Parallel()
